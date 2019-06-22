@@ -1,0 +1,16 @@
+{
+  "name": "octodon-toots",
+  "version": "1.0.0",
+  "description": "",
+  "main": "json2threads.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Unlicense",
+  "dependencies": {
+    "he": "^1.2.0",
+    "mkdirp": "^0.5.1"
+  }
+}
