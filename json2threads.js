@@ -1,11 +1,21 @@
 "use strict";
-/*
-First run
-$ mastodon-archive archive --no-favourites --with-mentions USERNAME@INSTANCE
-*/
+var USAGE = `
+Install Mastodon Archive https://github.com/kensanata/mastodon-backup and then run
+
+$ mastodon-archive archive USERNAME@INSTANCE
+
+This will create a INSTANCE.user.USERNAME.json file. Now, install Node modules:
+
+$ npm i
+
+Now you can run this script:
+
+$ node json2threads.js INSTANCE.user.USERNAME.json
+`;
 var {readFileSync, writeFileSync} = require('fs');
 var {decode} = require('he');
 var mkdirpSync = require('mkdirp').sync;
+
 /**
  *
  * @param {number} start
@@ -27,22 +37,37 @@ function status2md(status) {
   let ret = `## ${status.created_at}\n${stripHtml(status.content)}`;
   if (status.media_attachments.length) {
     ret += `### Attachments\n`;
-    ret += status.media_attachments.map(o => `- ![${o.description}](${o.url})\n`);
+    ret += status.media_attachments.map(o => `- ![${o.description}](${o.url})\n`).join('') + '\n';
   }
   return ret;
 }
+
 if (module === require.main) {
-  var all = JSON.parse(readFileSync('octodon.social.user.22.json', 'utf8'));
+  if (process.argv.length < 3) {
+    console.error(USAGE);
+    process.exit(1);
+  }
+  var filename = process.argv[2];
+  var all = JSON.parse(readFileSync(filename, 'utf8'));
+
+  // Maps to hold the directed graph of toots: indexed by ID (number) only
   var parent2childid = new Map();
   var child2parentid = new Map();
+
+  // Set to hold the toots starting threads (even of length 1), also indexed by ID (number)
   var threadStarts = new Set();
+
+  // Set to hold replies (context won't be available though <sad>), again ID (number)
   var replying = new Set();
+
+  // Map between ID (number) and its corresponding status object
   var id2status = new Map();
+
   for (const s of all.statuses) {
     const child = s.id;
     id2status.set(child, s);
 
-    if (s.reblog) { continue; }
+    if (s.reblog) { continue; } // I don't care about boosts
 
     const replyingToSomeoneElse = s.in_reply_to_account_id && (s.in_reply_to_account_id !== all.account.id);
     if (replyingToSomeoneElse) {
@@ -58,8 +83,8 @@ if (module === require.main) {
     }
     if (!parent) { threadStarts.add(child); }
   }
-  // console.log('replying.size', replying.size)
-  // loop over threadStarts for my own thread starts/boosts?, but also replying to get replies
+
+  // Keys=filenames, values=contents of files
   var threadFiles = new Map();
   for (let parent of threadStarts) {
     let children = allDescendants(parent, parent2childid);
@@ -71,9 +96,10 @@ if (module === require.main) {
     const reply = id2status.get(replyid);
     threadFiles.set('reply-' + reply.created_at, status2md(reply));
   }
+
+  // Finally output markdown files to directory
   var threadFilenames = Array.from(threadFiles.keys());
   threadFilenames.sort();
-  // console.log(threadFiles);
   mkdirpSync('threads');
   threadFilenames.forEach(k => writeFileSync(`threads/${k}.md`, threadFiles.get(k)))
 }
