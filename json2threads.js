@@ -31,7 +31,9 @@ function allDescendants(start, parent2childid, ret = new Set()) {
   return ret;
 }
 
-function stripHtml(s) { return decode(s.replace(/<p>/g, '').replace(/<\/p>/g, '\n\n').replace(/<[^>]+>/g, '')); }
+function stripHtml(s) {
+  return decode(s.replace(/<p>/g, '').replace(/<\/p>/g, '\n\n').replace(/<br \/>/g, '\n').replace(/<[^>]+>/g, ''));
+}
 
 function status2md(status) {
   let ret = `## ${status.created_at}\n${stripHtml(status.content)}`;
