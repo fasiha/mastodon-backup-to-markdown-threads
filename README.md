@@ -17,3 +17,5 @@ Finally, run
 $ node json2threads.js INSTANCE.user.USERNAME.json
 ```
 and look at the `threads/` directory.
+
+(`cat threads/* > all-threads.md`)

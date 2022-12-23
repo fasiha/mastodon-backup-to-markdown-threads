@@ -35,8 +35,10 @@ function stripHtml(s) {
   return decode(s.replace(/<p>/g, '').replace(/<\/p>/g, '\n\n').replace(/<br \/>/g, '\n').replace(/<[^>]+>/g, ''));
 }
 
+function statusHelper(status) { return `## ${status.created_at} ${status.url}\n${stripHtml(status.content)}`; }
+
 function status2md(status) {
-  let ret = `## ${status.created_at}\n${stripHtml(status.content)}`;
+  let ret = statusHelper(status.reblog || status);
   if (status.media_attachments.length) {
     ret += `### Attachments\n`;
     ret += status.media_attachments.map(o => `- ![${o.description}](${o.url})\n`).join('') + '\n';
@@ -69,7 +71,7 @@ if (module === require.main) {
     const child = s.id;
     id2status.set(child, s);
 
-    if (s.reblog) { continue; } // I don't care about boosts
+    if (s.reblog && s.reblog.account.id !== all.account.id) { continue; } // I don't care about boosts
 
     const replyingToSomeoneElse = s.in_reply_to_account_id && (s.in_reply_to_account_id !== all.account.id);
     if (replyingToSomeoneElse) {
