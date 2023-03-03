@@ -11,6 +11,6 @@
   "license": "Unlicense",
   "dependencies": {
     "he": "^1.2.0",
-    "mkdirp": "^0.5.1"
+    "mkdirp": "^0.5.6"
   }
 }
